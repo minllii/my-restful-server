@@ -1,17 +1,52 @@
 const express = require('express');
 const app = express();
 const port = 3000;
-
+const bcrypt = require('bcrypt');
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
-   res.send('Hello World!')
-});
+// new user registration
+app.post('/register', async (req, res) => {
+   let exist = await client.db("usersample").collection("userdetail").findOne({
+     username: req.body.username
+   })
+ 
+   if (exist) {
+     res.status(400).send("username already exist")
+   } else {
+     const hash = bcrypt.hashSync(req.body.password, 10);
+ 
+     let result = await client.db("usersample").collection("userdetail").insertOne(
+      {
+        username: req.body.username,
+        password: hash,
+      }
+    )
+    res.send(result)
+  }
+})
 
-app.post('/', (req, res) => {
-    res.send(req.body)
- });
+// user login 
+app.post('/login', async (req, res) => {
+   if (req.body.username != null && req.body.password != null) {
+     let result = await client.db("usersample").collection("userdetail").findOne({
+       username: req.body.username
+     })
+ 
+     if (result) {
+       if (bcrypt.compareSync(req.body.password, result.password) == true) {
+         res.send("Welcome back " + result.name)
+       } else {
+         res.status(401).send('wrong password')
+       }
+      } 
+      else {
+       res.status(401).send("username is not found")
+      }
+   } else {
+     res.status(400).send("missing username or password")
+   }
+ })
 
 app.listen(port, () => {
    console.log(`Server listening at http://localhost:${port}`);
@@ -37,9 +72,7 @@ async function run() {
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    await client.close();
-  }
+  } 
+  finally{}
 }
 run().catch(console.dir);
