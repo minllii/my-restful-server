@@ -35,7 +35,7 @@ app.post('/login', async (req, res) => {
  
      if (result) {
        if (bcrypt.compareSync(req.body.password, result.password) == true) {
-         res.send("Welcome back " + result.name)
+         res.send("Welcome back " + result.username)
        } else {
          res.status(401).send('wrong password')
        }
